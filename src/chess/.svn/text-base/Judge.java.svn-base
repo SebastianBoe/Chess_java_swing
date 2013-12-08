@@ -1,0 +1,396 @@
+package chess;
+
+import Exceptions.CastlingMoveHasBeenMadeException;
+import Pieces.*;
+import UI.Audio;
+import Utilities.PieceIterator;
+import Utilities.SquareIterator;
+import Utilities.ChessMove;
+import Utilities.Coordinate;
+import Utilities.SetOf2dCoords;
+
+public class Judge
+{
+	private Square selectedSquare = null;
+	private static boolean whiteTurn = true, aKillHasBeenMade = false;
+	private Audio audio = new Audio();
+	
+	public boolean SquareClicked(Square clickedSquare)
+	{
+		ChessMove move = new ChessMove(selectedSquare, clickedSquare);
+		Piece clickedPiece = clickedSquare.getPiece();
+		
+		if(selectedSquare == null)
+		{
+			if(clickedSquare.hasAPiece())
+			{
+				if(clickedPiece.isColor(whiteTurn))
+					setSelectedSquare(clickedSquare);
+				else audio.invalidMove();
+			}
+			else audio.invalidMove();
+		}
+		else if(selectedSquare != null)
+		{
+			if(clickedSquare.hasAPiece())
+			{
+				if(clickedPiece.isColor(whiteTurn))
+					setSelectedSquare(clickedSquare);
+				else
+					return tryToKillPiece(move);
+			}
+			else if(clickedSquare.isEmpty())
+				return tryToMovePiece(move);
+		}
+		audio.updateMusic(false);
+		return false;
+	}
+	
+	private boolean tryToKillPiece(ChessMove move)
+	{
+		Piece piece = move.getToPiece();
+		if(executeOrder(move))
+		{
+			if(!aKillHasBeenMade)
+				audio.firstBlood();
+			aKillHasBeenMade = true;
+			audio.attack(piece);
+			return true;
+		}
+		return false;
+	}
+	
+	private boolean tryToMovePiece(ChessMove move)
+	{
+		if(executeOrder(move))
+		{
+			audio.move(move.getToPiece());
+			return true;
+		}
+		return false;
+	}
+	
+	private boolean executeOrder(ChessMove move) {
+		if(Chessboard.tryMove(move))
+		{
+			Piece piece = move.getToPiece();
+			checkAndExecutePawnUpgrade(piece);
+			piece.setMoved(true);
+				
+			if(kingIsInChessmate(!whiteTurn))
+				audio.chessMate();
+			else if(kingIsInMate(!whiteTurn))
+			{
+				audio.mate();
+				audio.updateMusic(true);
+			}
+			
+			whiteTurn = !whiteTurn;
+			selectedSquare = null;
+			return true;
+		}
+		audio.invalidMove();
+		return false;	
+	}
+
+	private void checkAndExecutePawnUpgrade(Piece piece) {
+		if(piece.isPawn())
+		{
+			Square square = piece.getSquare();
+			if(square.getRow() == 0)
+			{
+				square.setPiece(new Queen(true, square));
+				updateThreats();
+				audio.PawnUpgrade();
+			}
+			else if(square.getRow() == 7)
+			{
+				square.setPiece(new Queen(false, square));
+				updateThreats();
+				audio.PawnUpgrade();
+			}
+		}
+	}
+
+	public Square getSelectedSquare() 
+	{
+		return selectedSquare;
+	}
+	
+	public void setSelectedSquare(Square selectedSquare) 
+	{
+		this.selectedSquare = selectedSquare;
+		audio.selected(selectedSquare.getPiece());
+	}
+	
+	public boolean isWhiteTurn() 
+	{
+		return whiteTurn;
+	}
+	
+	public void setWhiteTurn(boolean whiteTurn) 
+	{
+		Judge.whiteTurn = whiteTurn;
+	}
+	
+	public static void updateThreats()
+	{
+		clearAllThreats();
+		addAllThreats();
+	}
+
+	private static void addAllThreats() 
+	{
+		PieceIterator it = new PieceIterator();
+		while(it.hasNext())
+			{
+			Piece piece = it.next();
+			Square threateningSquare = piece.getSquare();
+			SetOf2dCoords threateningMoves = piece.getSetOfPossibleMoves();
+			for (int index = 0; index < threateningMoves.size(); index++)
+				Chessboard.getSquareAt(threateningMoves.getCoordinateAt(index)).addThreat(threateningSquare.getCoordinate());
+			}
+	}
+	
+	public static boolean isValidMove(Coordinate fromCoordinate, Coordinate toCoordinate)
+	{
+		ChessMove move = new ChessMove(Chessboard.getSquareAt(fromCoordinate), Chessboard.getSquareAt(toCoordinate));
+		return isValidMove(move);
+	}
+	
+	public static boolean isValidMove(ChessMove move)
+	{
+		Square squareMovingFrom = move.getFromSquare();
+		Piece pieceToBeMoved = move.getFromPiece();
+		
+		if(move.isInsideBoard())
+			if(squareMovingFrom.hasAPiece())
+			{
+				if(pieceToBeMoved.getSetOfPossibleMoves().contains(move))
+				{
+					if(!simulatedMovePutsYourselfIntoMate(move))
+						return true;
+				}
+				else if(isALegalCastling(move))
+				{
+					if(!simulatedCastlingPutsYourselfIntoMate(move))
+					{
+						doCastle(move.getFromCoordinate(), move.getToCoordinate());
+						throw new CastlingMoveHasBeenMadeException();
+					}
+				}
+			}
+		return false;
+	}
+	
+	private static boolean simulatedCastlingPutsYourselfIntoMate(ChessMove move) 
+	{
+		Coordinate fromCoordinate = move.getFromCoordinate();
+		Coordinate toCoordinate = move.getToCoordinate();
+		Square[][] chess_tmp = new Square[8][8];
+		createTmpChessBoard(chess_tmp);
+		Piece king = move.getFromPiece();
+		doCastle(fromCoordinate, toCoordinate);
+		
+		boolean kingIsInMate = kingIsInMate(king.isWhite());
+		Chessboard.setChessboard(chess_tmp);
+		return kingIsInMate;
+	}
+
+	private static void doCastle(Coordinate fromCoordinate,	Coordinate toCoordinate)
+	{
+		Piece king = Chessboard.getPieceAt(fromCoordinate);
+		king.moveTo(toCoordinate);
+		if(king.isWhite())
+		{
+			if(toCoordinate.equals(7, 2))
+			{
+				Piece rook = Chessboard.getPieceAt(7, 0);
+				rook.moveTo(new Coordinate(7, 3));
+			}
+			else
+			{
+				Piece rook = Chessboard.getPieceAt(7, 7);
+				rook.moveTo(new Coordinate(7, 5));
+			}
+		}
+		else
+		{
+			if(toCoordinate.equals(new Coordinate(0, 2)))
+			{
+				Piece rook = Chessboard.getPieceAt(0, 0);
+				rook.moveTo(new Coordinate(0, 3));				
+			}
+			else
+			{
+				Piece rook = Chessboard.getPieceAt(0, 7);
+				rook.moveTo(new Coordinate(0, 5));				
+			}
+		}
+	}
+
+	private static boolean isALegalCastling(ChessMove move) 
+	{
+		Piece piece = move.getFromPiece();
+		Coordinate toCoordinate = move.getToCoordinate();
+		if(piece.isKing() && piece.isSafeFromAttack() && !piece.isMoved())
+		{
+			if(whiteTurn)
+			{
+				if(whiteCanCastleWest(toCoordinate))
+					return true;
+				else if(whiteCanCastleEast(toCoordinate))
+					return true;
+			}
+			else 
+			{
+				if(!whiteTurn)
+				{
+					if(blackCanCastleWest(toCoordinate))
+						return true;
+					else if(blackCanCastleEast(toCoordinate))
+						return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	private static boolean blackCanCastleEast(Coordinate toCoordinate) 
+	{
+		Piece rook = Chessboard.getSquareAt(0, 7).getPiece();
+		
+		return toCoordinate.equals(new Coordinate(0, 6)) && !rook.isMoved()
+		&& rook.isRook()
+		&& !rook.isWhite()
+		&& Chessboard.getSquareAt(0, 6).isEmpty()
+		&& !Chessboard.getSquareAt(0, 6).isUnderThreatByColor(true)
+		&& Chessboard.getSquareAt(0, 5).isEmpty()
+		&& !Chessboard.getSquareAt(0, 5).isUnderThreatByColor(true);
+	}
+
+	private static boolean blackCanCastleWest(Coordinate toCoordinate) 
+	{
+		Piece rook = Chessboard.getSquareAt(0, 0).getPiece();
+		
+		return toCoordinate.equals(new Coordinate(0, 2)) && !rook.isMoved()
+		&& rook.isRook()
+		&& !rook.isWhite()
+		&& Chessboard.getSquareAt(0, 3).isEmpty()
+		&& Chessboard.getSquareAt(0, 2).isEmpty()
+		&& Chessboard.getSquareAt(0, 1).isEmpty()
+		&& !Chessboard.getSquareAt(0, 2).isUnderThreatByColor(true)
+		&& !Chessboard.getSquareAt(0, 3).isUnderThreatByColor(true);
+	}
+
+	private static boolean whiteCanCastleEast(Coordinate toCoordinate) {
+		Piece rook = Chessboard.getSquareAt(7, 7).getPiece();
+		
+		return toCoordinate.equals(new Coordinate(7, 6)) && !rook.isMoved()
+				&& rook.isRook()
+				&& rook.isWhite()
+				&& Chessboard.getSquareAt(7, 6).isEmpty()
+				&& Chessboard.getSquareAt(7, 5).isEmpty()
+				&& !Chessboard.getSquareAt(7, 6).isUnderThreatByColor(false)
+				&& !Chessboard.getSquareAt(7, 5).isUnderThreatByColor(false);
+	}
+
+	private static boolean whiteCanCastleWest(Coordinate toCoordinate) 
+	{
+		Piece rook = Chessboard.getSquareAt(7, 0).getPiece();
+		
+		return toCoordinate.equals(new Coordinate(7, 2)) && !rook.isMoved()
+				&& rook.isRook()
+				&& rook.isWhite()
+				&& Chessboard.getSquareAt(7, 3).isEmpty()
+				&& Chessboard.getSquareAt(7, 2).isEmpty()
+				&& Chessboard.getSquareAt(7, 1).isEmpty()
+				&& !Chessboard.getSquareAt(7, 2).isUnderThreatByColor(false)
+				&& !Chessboard.getSquareAt(7, 3).isUnderThreatByColor(false);
+	}
+
+	public static boolean simulatedMovePutsYourselfIntoMate(ChessMove move)
+	{
+		Piece toPiece = move.getToPiece();
+		Piece fromPiece = move.getFromPiece();
+		Square toSquare = move.getToSquare();
+		
+		Chessboard.doMove(move);
+		
+		boolean kingIsInMate = kingIsInMate(fromPiece.isWhite());
+		
+		fromPiece.moveTo(move.getFromCoordinate());
+		toSquare.setPiece(toPiece);
+		
+		return kingIsInMate;
+	}
+
+	private static void createTmpChessBoard(Square[][] chess_tmp) {
+		for (int row = 0; row < 8; row++)
+		{
+			for (int column = 0; column < 8; column++) 
+			{
+				chess_tmp[row][column] = new Square(Chessboard.getSquareAt(row, column).isWhite(), new Coordinate(row, column));
+				Piece piece = Chessboard.getPieceAt(row, column);
+				if(piece != null)
+				{
+					if(piece.isBishop())
+						chess_tmp[row][column].setPiece(new Bishop(piece.isWhite(), chess_tmp[row][column]));
+					else if(piece.isPawn())
+						chess_tmp[row][column].setPiece(new Pawn(piece.isWhite(), chess_tmp[row][column]));
+					else if(piece.isRook())
+						chess_tmp[row][column].setPiece(new Rook(piece.isWhite(), chess_tmp[row][column]));
+					else if(piece.isKing())
+						chess_tmp[row][column].setPiece(new King(piece.isWhite(), chess_tmp[row][column]));
+					else if(piece.isQueen())
+						chess_tmp[row][column].setPiece(new Queen(piece.isWhite(), chess_tmp[row][column]));
+					else if(piece.isKnight())
+						chess_tmp[row][column].setPiece(new Knight(piece.isWhite(), chess_tmp[row][column]));
+				}
+			}
+		}
+	}
+	
+	private static void clearAllThreats()
+	{
+		SquareIterator it = new SquareIterator();
+		while(it.hasNext())
+		{
+			it.next().clearThreats();
+		}
+	}
+	
+	public static boolean kingIsInChessmate(boolean white)
+	{
+		if(kingIsInMate(white))
+		{
+			PieceIterator it = new PieceIterator();
+			while(it.hasNext())
+			{
+				Piece piece = it.next();
+				Coordinate fromCoordinate = piece.getSquare().getCoordinate();
+				SetOf2dCoords moves = piece.getSetOfPossibleMoves();
+				if(piece.isColor(white) && !moves.isEmpty())
+				{
+					for (Coordinate toCoordinate : moves)
+					{
+						if(isValidMove(fromCoordinate, toCoordinate))
+							return false;
+					}
+				}
+			}
+			return true;
+		}
+		return false;
+	}
+	
+	public static boolean kingIsInMate(boolean white)
+	{
+		return !Chessboard.getKing(white).isSafeFromAttack();
+	}
+
+	public Audio getAudio() 
+	{
+		return audio;
+	}
+}

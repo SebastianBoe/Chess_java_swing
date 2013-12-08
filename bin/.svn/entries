@@ -1,0 +1,77 @@
+9
+
+dir
+21
+https://fncit.svn.beanstalkapp.com/spillprosjekt/src
+https://fncit.svn.beanstalkapp.com/spillprosjekt
+
+
+
+2010-04-27T15:27:39.498986Z
+21
+frecarlsen
+
+
+svn:special svn:externals svn:needs-lock
+
+
+
+
+
+
+
+
+
+
+
+b9bf49ec-df6b-4a2f-8f4f-442c26ba6081
+
+
+
+
+
+
+0
+
+ChessAudioFiles
+dir
+
+ChessPieceIcons
+dir
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+deleted
+
+Exceptions
+dir
+
+Pieces
+dir
+
+UI
+dir
+
+Utilities
+dir
+
+chess
+dir
+

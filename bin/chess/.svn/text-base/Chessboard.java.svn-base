@@ -1,0 +1,168 @@
+package chess;
+
+
+import Exceptions.CastlingMoveHasBeenMadeException;
+import Exceptions.CouldNotFindKingException;
+import Pieces.Bishop;
+import Pieces.King;
+import Pieces.Knight;
+import Pieces.Pawn;
+import Pieces.Piece;
+import Pieces.Queen;
+import Pieces.Rook;
+import Utilities.*;
+
+
+public class Chessboard
+{
+	private final static boolean white = true;
+	private final static boolean black = false;
+	private static Square[][] chessboard = new Square[8][8];
+	
+	public static Square[][] getChessboard() {
+		return chessboard;
+	}
+
+	public static void setChessboard(Square[][] chessboard) {
+		Chessboard.chessboard = chessboard;
+		Judge.updateThreats();
+	}
+
+	Chessboard()
+	{
+		build();
+	}
+	
+	private static void buildSquares()
+	{
+		boolean tempWhite = white;
+		for (int row = 0; row < 8; row++)
+		{
+			for(int column = 0; column < 8; column++)
+			{
+				chessboard[row][column] = new Square(tempWhite, new Coordinate(row, column));
+				tempWhite = !tempWhite;
+			}
+			tempWhite = !tempWhite;
+		}
+	}
+	
+	public static int getNumberOfPieces()
+	{
+		int numberOfPieces = 0;
+		SquareIterator it =  new SquareIterator();
+		while(it.hasNext())
+		{
+			if(it.next().hasAPiece())
+				numberOfPieces++;
+		}
+		return numberOfPieces;
+	}
+	
+	public static void build()
+	{
+		buildSquares();
+		chessboard[0][0].setPiece(new Rook(black, chessboard[0][0]));
+		chessboard[0][1].setPiece(new Knight(black, chessboard[0][1]));
+		chessboard[0][2].setPiece(new Bishop(black, chessboard[0][2]));
+		chessboard[0][3].setPiece(new Queen(black, chessboard[0][3]));
+		chessboard[0][4].setPiece(new King(black, chessboard[0][4]));
+		chessboard[0][5].setPiece(new Bishop(black, chessboard[0][5]));
+		chessboard[0][6].setPiece(new Knight(black, chessboard[0][6]));
+		chessboard[0][7].setPiece(new Rook(black, chessboard[0][7]));
+		
+		for (int i = 0; i < 8; i++)
+			chessboard[1][i].setPiece(new Pawn(black, chessboard[1][i]));
+		
+		for (int i = 0; i < 8; i++)
+			chessboard[6][i].setPiece(new Pawn(white, chessboard[6][i]));			
+		
+		chessboard[7][0].setPiece(new Rook(white, chessboard[7][0]));
+		chessboard[7][1].setPiece(new Knight(white, chessboard[7][1]));
+		chessboard[7][2].setPiece(new Bishop(white ,chessboard[7][2]));
+		chessboard[7][3].setPiece(new Queen(white ,chessboard[7][3]));
+		chessboard[7][4].setPiece(new King(white ,chessboard[7][4]));
+		chessboard[7][5].setPiece(new Bishop(white ,chessboard[7][5]));
+		chessboard[7][6].setPiece(new Knight(white ,chessboard[7][6]));
+		chessboard[7][7].setPiece(new Rook(white ,chessboard[7][7]));
+	}
+	
+	public static Piece getPieceAt(int row, int column)
+	{
+		return getPieceAt(new Coordinate(row, column));
+	}
+	
+	public static Piece getPieceAt(Coordinate coordinate)
+	{
+		return getSquareAt(coordinate).getPiece();
+	}
+	
+	public static Square getSquareAt(int row, int column)
+	{
+		return getSquareAt(new Coordinate(row, column));
+	}
+	
+	public static Square getSquareAt(Coordinate coordinate)
+	{
+		return coordinate.isInsideBoard() ? chessboard[coordinate.getRow()][coordinate.getColumn()] : null;
+	}
+
+	public static void printChessboard()
+	{
+		System.out.println("");
+		for (int i = 0; i < 8; i++)
+			System.out.print(i);
+
+		System.out.println("");
+		for(int r = 0; r < 8; r++)
+		{
+			for(int c = 0; c < 8; c++)
+			{	
+				Coordinate coordinate = new Coordinate(r, c);
+				char s = getSquareAt(coordinate).isEmpty() ? ' ' : getPieceAt(coordinate).getSign();
+				System.out.print(s);
+			}
+			System.out.println(r);
+		}
+		System.out.println("");
+	}
+	
+	public static void doMove(ChessMove move)
+	{
+		move.getToSquare().setPiece(move.getFromPiece());
+		move.getFromSquare().removePiece();
+		move.getToSquare().getPiece().setSquare(move.getToSquare());
+		Judge.updateThreats();
+	}
+
+	public static boolean tryMove(ChessMove move)
+	{
+		try
+		{
+			if(Judge.isValidMove(move))
+			{
+				Piece piece = move.getFromPiece();
+				doMove(move);
+				piece.setMoved(true);
+				return true;
+			}
+			return false;
+		}
+		catch(CastlingMoveHasBeenMadeException e)
+		{
+			return true;
+		}
+	}
+	
+	public static Piece getKing(boolean white)
+	{
+		PieceIterator it = new PieceIterator();
+		while(it.hasNext())
+		{
+			Piece piece = it.next();
+			if(piece.isKing() && piece.isColor(white))
+				return piece;
+		}
+		throw new CouldNotFindKingException();
+	}
+}

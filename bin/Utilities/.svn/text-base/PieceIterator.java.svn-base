@@ -1,0 +1,42 @@
+package Utilities;
+
+import java.util.Iterator;
+
+import chess.Chessboard;
+import chess.Square;
+
+import Pieces.Piece;
+
+public class PieceIterator implements Iterator<Piece>
+{
+	int PiecesIterated = 0;
+	int PiecesOnBoard = Chessboard.getNumberOfPieces();
+	SquareIterator it = new SquareIterator();
+	
+	@Override
+	public boolean hasNext() 
+	{
+		return PiecesIterated < PiecesOnBoard; 
+	}
+
+	@Override
+	public Piece next() 
+	{
+		while(it.hasNext())
+		{
+			Square square = it.next();
+			if(square.hasAPiece())
+			{
+				PiecesIterated++;
+				return square.getPiece();
+			}
+		}
+		throw new RuntimeException();
+	}
+
+	@Override
+	public void remove() {
+		System.out.println("unimplementedmethod");
+	}
+
+}

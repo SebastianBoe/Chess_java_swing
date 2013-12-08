@@ -1,0 +1,58 @@
+package Utilities;
+
+import Pieces.Piece;
+import chess.Square;
+
+public class ChessMove 
+{
+	private Square fromSquare, toSquare;
+	
+	
+	public ChessMove(Square fromSquare, Square toSquare) {
+		this.fromSquare = fromSquare;
+		this.toSquare = toSquare;
+	}
+	
+	public boolean isInsideBoard()
+	{
+		return fromSquare.getCoordinate().isInsideBoard() && toSquare.getCoordinate().isInsideBoard();
+	}
+	
+	public Coordinate getToCoordinate()
+	{
+		return toSquare.getCoordinate();
+	}
+	
+	public Coordinate getFromCoordinate()
+	{
+		return fromSquare.getCoordinate();
+	}
+	
+	public Piece getToPiece()
+	{
+		return toSquare.getPiece();
+	}
+	
+	public Piece getFromPiece()
+	{
+		return fromSquare.getPiece();
+	}
+	
+	public Square getFromSquare() {
+		return fromSquare;
+	}
+
+	public void setFromSquare(Square fromSquare) {
+		this.fromSquare = fromSquare;
+	}
+
+	public Square getToSquare() {
+		return toSquare;
+	}
+
+	public void setToSquare(Square toSquare) {
+		this.toSquare = toSquare;
+	}
+	
+	
+}

@@ -1,0 +1,23 @@
+K 25
+svn:wc:ra_dav:version-url
+V 41
+/spillprosjekt/!svn/ver/27/src/Exceptions
+END
+CouldNotFindKingException.java
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/spillprosjekt/!svn/ver/27/src/Exceptions/CouldNotFindKingException.java
+END
+CastlingMoveHasBeenMadeException.java
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/spillprosjekt/!svn/ver/27/src/Exceptions/CastlingMoveHasBeenMadeException.java
+END
+NotInsideBoardException.java
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/spillprosjekt/!svn/ver/29/src/Exceptions/NotInsideBoardException.java
+END

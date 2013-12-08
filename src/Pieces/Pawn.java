@@ -1,0 +1,86 @@
+package Pieces;
+
+import Utilities.Coordinate;
+import Utilities.SetOf2dCoords;
+import chess.Board;
+import chess.Square;
+
+public class Pawn extends Piece
+{
+	public Pawn(boolean white, Square square)
+	{
+		super(white, square);
+	}
+	
+	@Override
+	public Piece clone(boolean white, Square square2)
+	{
+		return new Pawn(white, square2);
+	}
+	
+	public Pawn()	{	}
+
+	public char getSign()
+	{
+		return 'p';
+	}
+	
+	public String getName()
+	{
+		return "Pawn";
+	}
+	
+	public SetOf2dCoords getSetOfPossibleMoves()
+	{
+		SetOf2dCoords list = new SetOf2dCoords();
+		int column = getColumn();
+		int row = getRow();
+		row += isWhite() ? - 1 : + 1;
+
+		addDiagonalAttacks(list, row);
+		addStraightMove(list, row, column);
+		addDoubleMove(list, column);
+		return list;
+	}
+
+	private void addDoubleMove(SetOf2dCoords list, int column) {
+		if(isAWhitePawnAtStartPosition())
+		{
+			if(pawnCanWalkTo(getRow() - 2, column))
+				if(pawnCanWalkTo(getRow() - 1, column))
+					list.addCoordinate(getRow() - 2, getColumn());
+		}
+		else if(isABlackPawnAtStartPosition())
+			if(pawnCanWalkTo(getRow() + 2, column))
+				if(pawnCanWalkTo(getRow() + 1, column))
+					list.addCoordinate(getRow() + 2, column);
+	}
+
+	private void addStraightMove(SetOf2dCoords list, int row, int column) {
+		if(pawnCanWalkTo(row, column))
+			list.addCoordinate(row, column);
+	}
+
+	private void addDiagonalAttacks(SetOf2dCoords list, int row) {
+		for (int column = getColumn() - 1; column < getColumn() + 2; column += 2) 
+		{
+			Coordinate coordinate = new Coordinate(row, column);
+			if(coordinate.isInsideBoard())
+				if(isOtherPlayersPiece(Board.getPieceAt(coordinate)))
+					list.addCoordinate(coordinate);
+		}
+	}
+
+	private boolean isABlackPawnAtStartPosition() {
+		return getRow() == 1 && !isWhite();
+	}
+
+	private boolean pawnCanWalkTo(int row, int column) {
+		return isLegalMoveTo(row, column) && Board.getSquareAt(row, column).isEmpty();
+	}
+
+	private boolean isAWhitePawnAtStartPosition() 
+	{
+		return getRow() == 6 && isWhite();
+	}
+}

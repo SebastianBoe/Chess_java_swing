@@ -1,0 +1,10 @@
+package Exceptions;
+
+@SuppressWarnings("serial")
+public class CastlingMoveHasBeenMadeException extends RuntimeException
+{
+	public CastlingMoveHasBeenMadeException()
+	{
+		super();
+	}
+}

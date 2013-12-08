@@ -1,0 +1,59 @@
+K 25
+svn:wc:ra_dav:version-url
+V 33
+/spillprosjekt/!svn/ver/20/src/UI
+END
+Album.java
+K 25
+svn:wc:ra_dav:version-url
+V 44
+/spillprosjekt/!svn/ver/31/src/UI/Album.java
+END
+ChessFrame.java
+K 25
+svn:wc:ra_dav:version-url
+V 49
+/spillprosjekt/!svn/ver/33/src/UI/ChessFrame.java
+END
+ImageViewer.java
+K 25
+svn:wc:ra_dav:version-url
+V 50
+/spillprosjekt/!svn/ver/10/src/UI/ImageViewer.java
+END
+MuteMenuListener.java
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/spillprosjekt/!svn/ver/31/src/UI/MuteMenuListener.java
+END
+mouseListenerImpl.java
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/spillprosjekt/!svn/ver/30/src/UI/mouseListenerImpl.java
+END
+AudioPlaylist.java
+K 25
+svn:wc:ra_dav:version-url
+V 52
+/spillprosjekt/!svn/ver/20/src/UI/AudioPlaylist.java
+END
+Audio.java
+K 25
+svn:wc:ra_dav:version-url
+V 44
+/spillprosjekt/!svn/ver/33/src/UI/Audio.java
+END
+NewGameMenuListener.java
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/spillprosjekt/!svn/ver/33/src/UI/NewGameMenuListener.java
+END
+HelpMenuListener.java
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/spillprosjekt/!svn/ver/30/src/UI/HelpMenuListener.java
+END
